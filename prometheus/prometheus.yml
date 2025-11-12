@@ -1,0 +1,82 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'network-monitoring-project'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files:
+  # - "alerts.yml"
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          group: 'monitoring'
+
+  # ✅ OpenTelemetry Prometheus Exporter (MAIN SOURCE OF OTEL METRICS)
+  - job_name: 'otel-metrics'
+    static_configs:
+      - targets: ['otel-collector:8889']
+        labels:
+          group: 'opentelemetry'
+
+  # SNMP Exporter service itself
+  - job_name: 'snmp-exporter'
+    static_configs:
+      - targets: ['snmp-exporter:9116']
+        labels:
+          group: 'snmp'
+
+  # SNMP devices (Mininet hosts, router, and simulator)
+  - job_name: 'snmp-devices'
+    metrics_path: /snmp
+    params:
+      module: [if_mib] # module name defined in your snmp_exporter.yml
+    static_configs:
+      - targets:
+          # --- NEW ROUTED TOPOLOGY IPS ---
+          - 10.0.1.1      # Router r1 (eth0)
+          - 10.0.1.101    # h1
+          - 10.0.1.102    # h2
+          - 10.0.1.103    # h3
+          - 10.0.2.1      # Router r1 (eth1)
+          - 10.0.2.104    # h4
+          - 10.0.2.105    # h5
+          - 10.0.2.106    # h6
+          # --- SIMULATOR ---
+          - snmp-simulator # SNMP device hostname (inside docker network)
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp-exporter:9116
+
+  # Node Exporter
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          group: 'system'
+
+  # Network Monitor Application
+  - job_name: 'network-monitor'
+    static_configs:
+      - targets: ['network-monitor:8080']
+        labels:
+          group: 'application'
+
+  # SNMP Collector custom metrics
+  - job_name: 'snmp-collector'
+    static_configs:
+      - targets: ['snmp-collector:8000']
+        labels:
+          group: 'snmp'

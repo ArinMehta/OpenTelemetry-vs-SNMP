@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  snmp-collector:
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  network-monitor:
+    environment:
+      - PYTHONUNBUFFERED=1

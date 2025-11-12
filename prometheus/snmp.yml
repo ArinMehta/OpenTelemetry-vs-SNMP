@@ -1,0 +1,6 @@
+modules:
+  default:
+    walk: [sysUpTime, ifTable]
+    version: 2
+    auth:
+      community: public
