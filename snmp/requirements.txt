@@ -1,0 +1,4 @@
+pysnmp==4.4.12
+prometheus-client==0.19.0
+pyasn1==0.4.8
+pyasn1-modules
