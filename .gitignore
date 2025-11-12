@@ -4,7 +4,6 @@
 .env
 .env.local
 .env.*.local
-.venv
 
 # Python
 __pycache__/
@@ -131,3 +130,4 @@ $RECYCLE.BIN/
 # Linux
 .directory
 .Trash-*
+

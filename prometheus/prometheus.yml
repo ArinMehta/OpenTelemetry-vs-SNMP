@@ -27,38 +27,37 @@ scrape_configs:
         labels:
           group: 'opentelemetry'
 
-  # SNMP Exporter service itself
+  # SNMP Exporter (the service itself)
   - job_name: 'snmp-exporter'
     static_configs:
       - targets: ['snmp-exporter:9116']
         labels:
           group: 'snmp'
 
-  # SNMP devices (Mininet hosts, router, and simulator)
+  # CORRECTED: SNMP devices via SNMP Exporter
+  # This single job now scrapes ALL SNMP devices (simulator + Mininet hosts)
+  # by telling the snmp-exporter to scrape them.
   - job_name: 'snmp-devices'
     metrics_path: /snmp
     params:
-      module: [if_mib] # module name defined in your snmp_exporter.yml
+      module: [if_mib]     # module name defined in your snmp_exporter.yml
     static_configs:
       - targets:
-          # --- NEW ROUTED TOPOLOGY IPS ---
-          - 10.0.1.1      # Router r1 (eth0)
-          - 10.0.1.101    # h1
-          - 10.0.1.102    # h2
-          - 10.0.1.103    # h3
-          - 10.0.2.1      # Router r1 (eth1)
-          - 10.0.2.104    # h4
-          - 10.0.2.105    # h5
-          - 10.0.2.106    # h6
-          # --- SIMULATOR ---
-          - snmp-simulator # SNMP device hostname (inside docker network)
+          - snmp-simulator  # SNMP device hostname (inside docker network)
+          # Add all the Mininet hosts as targets for the exporter
+          - '10.0.0.1'
+          - '10.0.0.2'
+          - '10.0.0.3'
+          - '10.0.0.4'
+          - '10.0.0.5'
+          - '10.0.0.6'
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: snmp-exporter:9116
+        replacement: snmp-exporter:9116 # Always scrape via the exporter
 
   # Node Exporter
   - job_name: 'node-exporter'
@@ -80,3 +79,6 @@ scrape_configs:
       - targets: ['snmp-collector:8000']
         labels:
           group: 'snmp'
+
+  # REMOVED: The old, incorrect 'snmp' job is no longer needed
+  # as its targets are merged into 'snmp-devices' above.

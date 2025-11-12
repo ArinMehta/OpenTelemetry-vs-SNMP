@@ -17,16 +17,13 @@ class TrafficGenerator:
     
     def __init__(self, targets: List[str] = None):
         if targets is None:
-            # Updated IP addresses for the new routed topology
             self.targets = [
-                '10.0.1.1',   # Router (r1) on subnet 1
-                '10.0.1.101', # h1
-                '10.0.1.102', # h2
-                '10.0.1.103', # h3
-                '10.0.2.1',   # Router (r1) on subnet 2
-                '10.0.2.104', # h4
-                '10.0.2.105', # h5
-                '10.0.2.106', # h6
+                '10.0.0.1',
+                '10.0.0.2',
+                '10.0.0.3',
+                '10.0.0.4',
+                '10.0.0.5',
+                '10.0.0.6',
             ]
         else:
             self.targets = targets
@@ -36,9 +33,8 @@ class TrafficGenerator:
     def generate_ping_traffic(self, target: str, count: int = 10):
         """Generate ICMP ping traffic"""
         try:
-            # Added a 1-second deadline to ping
             result = subprocess.run(
-                ['ping', '-c', str(count), '-W', '1', target],
+                ['ping', '-c', str(count), target],
                 capture_output=True,
                 text=True,
                 timeout=count + 5
@@ -47,8 +43,8 @@ class TrafficGenerator:
             if result.returncode == 0:
                 # Parse statistics
                 output = result.stdout
-                if 'min/avg/max' in output or 'rtt min/avg/max' in output:
-                    stats_line = output.splitlines()[-1]
+                if 'min/avg/max' in output:
+                    stats_line = output.split('min/avg/max')[1].split('\n')[0]
                     print(f"[{datetime.now().strftime('%H:%M:%S')}] "
                           f"Ping to {target}: {stats_line}")
             else:
@@ -61,10 +57,9 @@ class TrafficGenerator:
     def generate_http_traffic(self, target: str, port: int = 80):
         """Generate HTTP traffic"""
         try:
-            # Added a 3-second timeout
             result = subprocess.run(
                 ['curl', '-s', '-o', '/dev/null', '-w', '%{time_total}',
-                 '--connect-timeout', '3', f'http://{target}:{port}'],
+                 f'http://{target}:{port}'],
                 capture_output=True,
                 text=True,
                 timeout=10
@@ -76,7 +71,7 @@ class TrafficGenerator:
                       f"HTTP to {target}:{port}: {response_time:.2f} ms")
             else:
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] "
-                      f"HTTP to {target}:{port}: FAILED (Target: {target}:{port})")
+                      f"HTTP to {target}:{port}: FAILED")
                       
         except Exception as e:
             print(f"Error generating HTTP traffic to {target}:{port}: {e}")
@@ -102,11 +97,6 @@ class TrafficGenerator:
     def generate_tcp_traffic(self, target: str, port: int = 5001, duration: int = 5):
         """Generate TCP traffic using iperf"""
         try:
-            # Check if iperf server is running on target
-            # This is a simple check, iperf server should be started manually on hosts
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] "
-                  f"Starting iperf TCP to {target}:{port}...")
-            
             result = subprocess.run(
                 ['iperf', '-c', target, '-p', str(port), '-t', str(duration)],
                 capture_output=True,
@@ -126,7 +116,7 @@ class TrafficGenerator:
                             break
             else:
                 print(f"[{datetime.now().strftime('%H:%M:%S')}] "
-                      f"TCP to {target}:{port}: FAILED (Is iperf server running on target?)")
+                      f"TCP to {target}:{port}: FAILED")
                       
         except Exception as e:
             print(f"Error generating TCP traffic to {target}:{port}: {e}")
@@ -145,8 +135,7 @@ class TrafficGenerator:
             if traffic_type == 'ping':
                 self.generate_ping_traffic(target, count=5)
             elif traffic_type == 'http':
-                # Hosts h1-h6 are 8001-8006, r1 is 8007
-                port = random.randint(8001, 8007)
+                port = random.randint(8001, 8006)
                 self.generate_http_traffic(target, port)
             elif traffic_type == 'udp':
                 port = random.randint(5000, 5010)
@@ -168,7 +157,7 @@ class TrafficGenerator:
         
         while time.time() - start_time < duration:
             # Create multiple threads for concurrent traffic
-            for target in self.targets:
+            for target in self.targets[:3]:  # Use first 3 targets
                 t = threading.Thread(target=self.generate_ping_traffic, args=(target, 10))
                 t.start()
                 threads.append(t)
@@ -256,3 +245,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

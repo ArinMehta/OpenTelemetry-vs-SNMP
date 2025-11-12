@@ -1,6 +1,6 @@
 # Network Monitoring: OpenTelemetry vs SNMP
 
-## CS331 Project - IIT Gandhinagar
+## CS331 Project - Group 23
 
 **Team Members:**
 - Vedant Chichmalkar (22110282) - SNMP Implementation & Prometheus Integration
@@ -13,34 +13,21 @@ This project compares and integrates two key observability tools: OpenTelemetry 
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Network Topology                          │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐              │
-│  │  Host 1  │────│ Switch 1 │────│  Host 2  │              │
-│  └──────────┘    └──────────┘    └──────────┘              │
-│       │               │                │                     │
-│       └───────────────┴────────────────┘                     │
-│                       │                                      │
-└───────────────────────┼──────────────────────────────────────┘
-                        │
-        ┌───────────────┴───────────────┐
-        │                               │
-   ┌────▼─────┐                  ┌─────▼────┐
-   │   SNMP   │                  │OpenTelem │
-   │  Agent   │                  │  Agent   │
-   └────┬─────┘                  └─────┬────┘
-        │                               │
-        └───────────────┬───────────────┘
-                        │
-                  ┌─────▼──────┐
-                  │ Prometheus │
-                  └─────┬──────┘
-                        │
-                  ┌─────▼──────┐
-                  │  Grafana   │
-                  └────────────┘
-```
+**Hybrid setup combining**:
+
+      - Mininet for network simulation.
+      - Docker Compose for observability stack.
+
+**Centralized stack**:
+
+      - Prometheus (time-series DB)
+      - Grafana (visualization)
+      - SNMP Exporter
+      - OTel Collector
+      - SNMP Simulator
+
+Ensures reproducibility and cross-platform integration.
+
 
 ## Features
 
@@ -55,19 +42,24 @@ This project compares and integrates two key observability tools: OpenTelemetry 
 ```
 .
 ├── docker-compose.yml          # Docker services orchestration
+├── docker-compose.override.yml  # Overrides for local development
 ├── mininet/                    # Network topology scripts
 │   ├── topology.py            # Mininet network setup
 │   └── traffic_generator.py   # Network traffic simulation
 ├── snmp/                       # SNMP monitoring setup
-│   ├── snmpd.conf             # SNMP daemon configuration
+│   ├── DockerFile             # SNMP simulator Dockerfile
+│   ├── requirements.txt       # SNMP simulator requirements
 │   ├── snmp_exporter.yml      # SNMP exporter for Prometheus
 │   └── collect_snmp.py        # SNMP data collection script
 ├── opentelemetry/             # OpenTelemetry setup
 │   ├── otel-collector-config.yaml
+│   ├── DockerFile             # OTel Collector Dockerfile
+│   ├── requirements.txt       # OTel Collector requirements
 │   ├── instrumentation.py     # Application instrumentation
 │   └── network_monitor.py     # Network metrics collection
 ├── prometheus/                 # Prometheus configuration
-│   └── prometheus.yml
+│   ├── prometheus.yml
+│   └── snmp.yml           
 ├── grafana/                    # Grafana dashboards
 │   ├── dashboards/
 │   │   ├── snmp-dashboard.json
@@ -78,10 +70,7 @@ This project compares and integrates two key observability tools: OpenTelemetry 
 │   ├── setup.sh               # Environment setup
 │   ├── start.sh               # Start all services
 │   └── test.sh                # Run tests
-└── docs/                       # Documentation
-    ├── setup-guide.md
-    ├── comparison-analysis.md
-    └── presentation.md
+└── README.md                   # Project documentation
 ```
 
 ## Prerequisites
@@ -107,7 +96,6 @@ This project compares and integrates two key observability tools: OpenTelemetry 
 
 - **Grafana**: http://localhost:3000 (admin/admin)
 - **Prometheus**: http://localhost:9090
-- **OpenTelemetry Collector**: http://localhost:4317 (gRPC), http://localhost:4318 (HTTP)
 
 ### 3. Run Network Simulation
 
@@ -135,12 +123,6 @@ python mininet/traffic_generator.py
 - Connection states
 - Application-level metrics
 
-## Timeline
-
-- **Week 1**: Planning, Setup and Research ✓
-- **Week 2**: Environment Setup
-- **Week 3**: Implementation and Data Collection
-- **Week 4**: Analysis, Visualization & Documentation
 
 ## Expected Outcomes
 
@@ -148,12 +130,4 @@ python mininet/traffic_generator.py
 2. Grafana dashboards showing real-time data from both tools
 3. Performance comparison analysis
 4. Insights into combining SNMP and OpenTelemetry for comprehensive monitoring
-
-## License
-
-MIT License - Academic Project
-
-## Contact
-
-For questions or issues, contact the team members at their IIT Gandhinagar email addresses.
 
